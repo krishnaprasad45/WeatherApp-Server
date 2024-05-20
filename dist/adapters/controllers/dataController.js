@@ -39,15 +39,50 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveWeatherData = void 0;
+exports.getRecords = exports.saveWeatherData = exports.getWeatherData = void 0;
+var axios_1 = __importDefault(require("axios"));
 var weatherDataModel_1 = __importDefault(require("../data-access/models/weatherDataModel"));
+var documentRepository_1 = require("../data-access/repositories/documentRepository");
+var weatherApi = process.env.OPENWEATHER_API_KEY; // OpenWeatherMap API key
+var getWeatherData = function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    var city, response, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                city = req.body.data;
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 4, , 5]);
+                return [4 /*yield*/, axios_1.default.get("https://api.openweathermap.org/data/2.5/weather", {
+                        params: {
+                            q: city,
+                            units: 'metric',
+                            appid: weatherApi
+                        }
+                    })];
+            case 2:
+                response = _a.sent();
+                return [4 /*yield*/, (0, exports.saveWeatherData)(response.data)];
+            case 3:
+                _a.sent();
+                res.json(response.data);
+                return [3 /*break*/, 5];
+            case 4:
+                error_1 = _a.sent();
+                console.error(error_1);
+                next(error_1);
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getWeatherData = getWeatherData;
 var saveWeatherData = function (weatherData) { return __awaiter(void 0, void 0, void 0, function () {
-    var newWeather, error_1;
+    var newWeather, error_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                console.log(3);
                 newWeather = new weatherDataModel_1.default({
                     name: weatherData.name,
                     main: {
@@ -66,11 +101,37 @@ var saveWeatherData = function (weatherData) { return __awaiter(void 0, void 0, 
                 _a.sent();
                 return [3 /*break*/, 3];
             case 2:
-                error_1 = _a.sent();
-                console.error('Error saving weather data:', error_1);
-                return [3 /*break*/, 3];
+                error_2 = _a.sent();
+                console.error('Error saving weather data:', error_2);
+                throw error_2;
             case 3: return [2 /*return*/];
         }
     });
 }); };
 exports.saveWeatherData = saveWeatherData;
+function getRecords(req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var records, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, (0, documentRepository_1.getRecordsFromDB)()];
+                case 1:
+                    records = _a.sent();
+                    if (records)
+                        res.status(200).json(records);
+                    else {
+                        throw new Error("User not found in the database");
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_3 = _a.sent();
+                    console.error("Error fetching records:", error_3);
+                    throw error_3;
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.getRecords = getRecords;
